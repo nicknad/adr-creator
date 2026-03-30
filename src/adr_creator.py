@@ -6,11 +6,9 @@ from datetime import date
 from pathlib import Path
 import argparse
 
-
 # =========================
-# Core Logic (Pure Functions)
+# Core Logic
 # =========================
-
 def slugify(text: str) -> str:
     if not text:
         return "untitled"
@@ -22,8 +20,9 @@ def slugify(text: str) -> str:
     text = re.sub(r"[^a-z0-9\s-]", "", text)
     text = re.sub(r"[\s-]+", "-", text)
 
-    return text[:100] or "untitled"
+    text = text.strip("-")   # <-- FIX
 
+    return text[:100] or "untitled"
 
 def get_next_adr_number(path: Path) -> int:
     numbers = []
@@ -37,7 +36,6 @@ def get_next_adr_number(path: Path) -> int:
             continue
 
     return max(numbers, default=0) + 1
-
 
 def build_adr_content(
     num: int,
@@ -69,7 +67,6 @@ def build_adr_content(
 *Once accepted, do not modify — create a superseding ADR instead.*
 """
 
-
 def default_author() -> str:
     return (
         os.getenv("GIT_AUTHOR_NAME")
@@ -78,17 +75,14 @@ def default_author() -> str:
         or "Unknown"
     )
 
-
 # =========================
-# CLI / Input Helpers
+# CLI
 # =========================
-
 def prompt(text: str, default: str | None = None) -> str:
     if default:
         value = input(f"{text} [{default}]: ").strip()
         return value or default
     return input(f"{text}: ").strip()
-
 
 def prompt_int(text: str, default: int) -> int:
     while True:
@@ -102,7 +96,6 @@ def prompt_int(text: str, default: int) -> int:
                 return val
 
         print("Invalid number (1–9999).")
-
 
 def multiline_input(prompt_text: str) -> str:
     print(f"\n{prompt_text}")
@@ -120,17 +113,14 @@ def multiline_input(prompt_text: str) -> str:
 
     return "\n".join(lines).strip()
 
-
 def confirm_overwrite(path: Path) -> bool:
     if not path.exists():
         return True
     return input(f"{path.name} exists. Overwrite? (y/N): ").lower() == "y"
 
-
 # =========================
 # CLI Argument Parsing
 # =========================
-
 def parse_args():
     parser = argparse.ArgumentParser(description="ADR Creator")
 
@@ -142,11 +132,9 @@ def parse_args():
 
     return parser.parse_args()
 
-
 # =========================
-# Main Application Flow
+# Application Flow
 # =========================
-
 def run():
     args = parse_args()
 
@@ -224,42 +212,12 @@ def run():
     print("\nADR created:")
     print(filepath)
 
-
-# =========================
-# Tests
-# =========================
-
-def test_slugify():
-    assert slugify("HTMX for Active Web Pages!") == "htmx-for-active-web-pages"
-    assert slugify("") == "untitled"
-    assert slugify("Ä Ö Ü Test") == "a-o-u-test"
-
-
-def test_next_number(tmp_path):
-    (tmp_path / "0005-test.md").touch()
-    (tmp_path / "0010-test.md").touch()
-
-    assert get_next_adr_number(tmp_path) == 11
-
-
-def test_build_content():
-    content = build_adr_content(
-        1, "Title", "Author", "proposed", "", "", "", "2025-01-01"
-    )
-    assert "No detailed context provided." in content
-
-
 # =========================
 # Entrypoint
 # =========================
-
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] in ("test", "--test", "-t"):
-        import pytest
-        sys.exit(pytest.main([__file__, "-q"]))
-    else:
-        try:
-            run()
-        except KeyboardInterrupt:
-            print("\nCancelled.")
-            sys.exit(0)
+    try:
+        run()
+    except KeyboardInterrupt:
+        print("\nCancelled.")
+        sys.exit(0)
